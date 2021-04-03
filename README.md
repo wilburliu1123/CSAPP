@@ -199,3 +199,51 @@ CPU maintains a set of single-bit condition code registers describing attributes
 > **0F**: Overflow flag. The most recent operation caused a two's complement overflow--either negative or positive.
 #### 3.6.3 Jump Instructions
 A jump instruction can cause the execution to switch to a completely new position in the program. These jump destinations are generally indicated in assembly code by a label. 
+
+## Chapter 6
+
+### Storege Tech
+
+Difference between SRAM and DRAM and how 
+
+这里就介绍了SRAM 跟DRAM的区别
+
+#### 6.2 Locality
+
+*temporal locality* - data is likely going to be referenced again in future
+
+*spatial locality* - if a memory location is referenced once, then the program is likely to reference a nearby memory location in the near future.
+
+> For example, Web browsers exploit temporal locality by caching recently referenced documents on a local disk. High-volume Web servers hold recently requested documents in front-end disk caches that satisfy requests for these documents without requiring any intervention from the server.
+
+生活中的例子： 网易云音乐
+
+
+
+#### 6.4.3 Set Associative Caches
+The problem with conflict misses in direct-mapped caches stems from the constraint that each set has exactly one line (E=1). A set associative cache relaxes this constraint so that each set holds more than one cache line. A cache with 1 < E < C / B is often called an E-way set associative cache. We will discuss the special case, where E = C/B, in the next section. Figure 6.32 shows the organization of a two-way set associative cache. 
+Set selection is identical to a direct-mapped cache, with set index bits identifying the set. Figure 6.33 summarizes this principle.
+![figure 6.32 6.33](https://upload-images.jianshu.io/upload_images/6543506-0e3611f901b00de3.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+Line matching is more involved in a set associative cache than in a direct-mapped cache because it must check the tags and valid bits of multiple lines in order to determine if the requested word is in the set. A conventional memory is an array of values that takes an address as input and returns the value stored at that address. An *associative memory*, on the other hand, is an array of (key, value) pairs that takes as input the key and returns a value from one of the (key, value) pairs that matches the input key. Thus, we can think of each set in a set associative cache as a small associative memory where the keys are the concatenation of the tag and valid bits, and the values are the contents of a block.
+
+Figure 6.34 shows the basic idea of the line matching in an associative cache. An important idea here is that any line in the set can contain any of the memory blocks that map to that set. So the cache must search each line in the set ofr a valid line whose tag matches the tag in the If the cache finds such a line, then we have a hit and the block offset selects a word from the block, as before.
+
+也就是说找到了tag 之后，它会逐行寻找matched address. 
+
+Line Replacement on misses in set associative caches 
+If the word requested by the CPU is not stored in any of the lines in the set, then we have a cache miss, and the cache must fetch the block that contains the word from memory. However, once the cache has retrieved the block, which lien should it replace? If there are no empty lines in the set, then it would be a good candidate. But if there are no empty lines in the set, we must choose one of the nonempty lines and hope that the CPU does not reference the replaced line anytime soon.
+
+
+#### Why do all choices matter?
+The advantage of increasing the degree of associativity is that it usually decreases the miss rate. The improvement in miss rate comes from reducing misses that compete for the same location. 
+
+#### Writing cache friendly code
+![image.png](https://upload-images.jianshu.io/upload_images/6543506-928c54c30e1ff0e8.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+> In general, if a cache has a block size of B bytes, then a stride-k reference pattern (where k is expressed in words) results in an average of min(1, word size*k)/B misses per loop iteration. This is minimized for k = 1, so the stride-1 references to v are indeed cache friendly. for example, suppose that v is block aligned, words are 4 bytes, cache blocks are 4 words, and the cache is initially empty(a cold cache). Then, regardless of the cache organization, the references references to v will result in the following pattern of hits and misses.
+> ![image.png](https://upload-images.jianshu.io/upload_images/6543506-bde84840b59e93f3.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+To Summarize, out simple sumvec example illustrates two important points about writing cache-friendly code:
+  * repeated references to local variables are good because the compiler can cache them in the register file (temporal locality)
+  * Stride-1 reference patterns are good because caches at all levels of the memory hierarchy store data as contiguous blocks(spatial locality) 
