@@ -207,7 +207,8 @@ A jump instruction can cause the execution to switch to a completely new positio
 Difference between SRAM and DRAM and how 
 
 这里就介绍了SRAM 跟DRAM的区别
-
+CPU will do other work while reading file from disk.
+![figure 6.12](https://upload-images.jianshu.io/upload_images/6543506-7ce7ef48c389872b.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 #### 6.2 Locality
 
 *temporal locality* - data is likely going to be referenced again in future
@@ -218,6 +219,12 @@ Difference between SRAM and DRAM and how
 
 生活中的例子： 网易云音乐
 
+a[i+1] = a[i] + b[i];
+
+#### 6.4.3 Set Associative Caches
+
+The problem with conflict misses in direct-mapped caches stems from the constraint that each set has exactly one line (E=1). A set associative cache relaxes this constraint so that each set holds more than one cache line. A cache with 1 < E < C / B is often called an E-way set associative cache. We will discuss the special case, where E = C/B, in the next section. Figure 6.32 shows the organization of a two-way set associative cache. 
+Set selection is identical to a direct-mapped cache, with set index bits identifying the set. Figure 6.33 summarizes this principle.
 
 
 #### 6.4.3 Set Associative Caches
@@ -247,3 +254,69 @@ The advantage of increasing the degree of associativity is that it usually decre
 To Summarize, out simple sumvec example illustrates two important points about writing cache-friendly code:
   * repeated references to local variables are good because the compiler can cache them in the register file (temporal locality)
   * Stride-1 reference patterns are good because caches at all levels of the memory hierarchy store data as contiguous blocks(spatial locality) 
+
+
+
+
+
+### Chapter 8
+
+What is a socket?
+
+Ok-you may have heard some Unix hacker state, "Jeez, everything in Unix is a file!" What that person may have been talking about is the fact that when Unix programs do any sort of I/O, they do it by reading or writing to a file descriptor. A file descriptor is simply an integer associated with an open file. But(and here's the catch), **that file can be a network connection**, a FIFO, a pipe, a terminal, a real on-the-disk file, or just about anything else. Everything in Unix is a file! So when you want to communicate with another program over the Internet you're gonna do it through a file descriptor
+
+You make a call to the socket() system routine. It returns the socket descriptor, and you communicate through it using the specialized send() and recv() (man send, man recv). socket calls.
+
+#### Two types of Internet sockets 
+
+One is "Stream sockets"; the other is "Datagram sockets" referred to as "SOCK_STREAM" and "SOCK_DGRAM", respectively. Datagram sockets are sometimes called "connectionsless sockets". 
+
+Stream sockets are reliable two-way connected communication streams. If you output two items into the socket in the order "1,2", they will arrive in the order "1,2" at the opposite end. They will also be error-free. 
+
+What uses steam sockets? Well, you may have heard of the telnet application, yes? it uses stream sockets. All the characters you type need to arrive in the same order you type them, right? Also, **web browsers use the Hypertext Transfer Protocol (HTTP) which uses stream sockets to get pages. Indeed, if you telnet to a web site on port 80, and type "GET / HTTP/1,0" and hit RETURN twice, it'll dump HTML back at you
+
+How do stream sockets achieve this high level of data transmission quality? They use a protocol called "The Transmission Control Protocol", otherwise known as **"TCP"**.
+
+TCP makes sure your data arrives sequentially and error-free. You may have heard "TCP" before as the better half of "TCP/IP" where "IP" stands for "Intenet Protocol" IP deals primarily with Intenet routing and is not generally responsible for data integrity. 
+
+Cool. What about Datagram sockets? Why are they called connectionless? What is the deal, here, anyway? Here are some facts: if you send a datagram, it may arrive. It may arrive out of order. If it arrives, the data within the packet will be error-free.
+
+Datagram sockets also use IP for routing, but they don't use TCP; they use the "User Datagram Protocol", or "UDP" 
+
+Why are they connectionless? Well, basically it's beacuse you don't have to maintain an open connection as you do with stream sockets. You just build a packet, slap an IP header on it with destination information, and send it out. No connection needed. They are generally used either when a TCP stack is unavailable or when a few dropped packets here and there don't mean the end of the Universe. Sample applications: tftp(trivial file transfer protocol, a little brother to FTP), dhcpcd(a DHCP client), multiplayer games, streaming audio. video conferencing, etc.
+
+Well, my human friend, `tftp` and similar programs have their own protocol on top of UDP. For example, the tftp protocol says that for each packet that gets sent, the recipient has to send back a packet that says, “I got it!” (an “ACK” packet). If the sender of the original packet gets no reply in, say, five seconds, he’ll re-transmit the packet until he finally gets an ACK. This acknowledgment procedure is very important when implementing reliable `SOCK_DGRAM` applications.
+
+For unreliable applications like games, audio, or video, you just ignore the dropped packets, or perhaps try to cleverly compensate for them.
+
+Why would you use an unreliable underlying protocol? Two reasons: speed and speed. It’s way faster to fire-and-forget than it is to keep track of what has arrived safely and make sure it’s in order and all that. If you’re sending chat messages, TCP is great; if you’re sending 40 positional updates per second of the players in the world, maybe it doesn’t matter so much if one or two get dropped, and UDP is a good choice.
+
+### OSI
+
+**Layered Network Model** (aka ISO/OSI). you can write sockets programs that are exactly the same without caring how the data is physically transmitted (serial, think ethernet, AUI, whatever) because programs on lower levels deal with it for you. The actual network hardware and topology is transparent to the socket programmer.
+
+Model:
+
+- Application
+- Presentation
+- Sesssion
+- Transport
+- Network
+- Data Link
+- Physical
+
+The physical layer is hardware (serial, Ethernet, etc) The application layer is just about as far from the physical layer as you can imagine--it's the place where users interact with the network.
+
+Now, this model is so general you could probably use it as an automobile repair guide if you really wanted to. A layered model more consistent with Unix might be:
+
+- Application Layer (telnet, ftp, etc)
+- Host-to-Host Transport layer (TCP, UDP)
+- Internet Layer(IP and routing)
+- Network Access Layer(Ethernet, wi-fi, or whatever)
+
+#### IP addresses, structs, and data munging
+
+##### IPv4
+
+Internet protocol version 4 had addresses made up of four bytes (4 "octets"), and was commonly written in "dots and numbers" form, like 192.0.2.111.
+
