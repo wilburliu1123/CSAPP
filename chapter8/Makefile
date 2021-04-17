@@ -10,5 +10,7 @@ setjump:
 	gcc csapp.h setjump.c
 restart:
 	gcc csapp.c csapp.h restart.c
+shell:
+	gcc shell.c
 clean:
 	rm sigint
