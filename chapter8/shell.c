@@ -293,7 +293,7 @@ int main() {
     printf("You can also terminate at prompt line by returning exit\n");
 
     while (1) {
-        printf("k-sea-shell>");
+        printf("wilbur-shell>");
         char* readline = read_command();
         if (readline != NULL && isValid(readline)) {
             if (checkPipe(readline) > 0) {
