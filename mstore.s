@@ -1,24 +1,21 @@
-	.section	__TEXT,__text,regular,pure_instructions
-	.build_version macos, 11, 0	sdk_version 11, 1
-	.globl	_multstore              ; -- Begin function multstore
-	.p2align	2
-_multstore:                             ; @multstore
+	.file	"mstore.c"
+	.text
+	.globl	multstore
+	.type	multstore, @function
+multstore:
+.LFB0:
 	.cfi_startproc
-; %bb.0:
-	stp	x20, x19, [sp, #-32]!   ; 16-byte Folded Spill
-	stp	x29, x30, [sp, #16]     ; 16-byte Folded Spill
-	add	x29, sp, #16            ; =16
-	.cfi_def_cfa w29, 16
-	.cfi_offset w30, -8
-	.cfi_offset w29, -16
-	.cfi_offset w19, -24
-	.cfi_offset w20, -32
-	mov	x19, x2
-	bl	_mult2
-	str	x0, [x19]
-	ldp	x29, x30, [sp, #16]     ; 16-byte Folded Reload
-	ldp	x20, x19, [sp], #32     ; 16-byte Folded Reload
+	pushq	%rbx
+	.cfi_def_cfa_offset 16
+	.cfi_offset 3, -16
+	movq	%rdx, %rbx
+	call	mult2
+	movq	%rax, (%rbx)
+	popq	%rbx
+	.cfi_def_cfa_offset 8
 	ret
 	.cfi_endproc
-                                        ; -- End function
-.subsections_via_symbols
+.LFE0:
+	.size	multstore, .-multstore
+	.ident	"GCC: (GNU) 4.8.5 20150623 (Red Hat 4.8.5-39)"
+	.section	.note.GNU-stack,"",@progbits
