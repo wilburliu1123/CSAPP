@@ -9,4 +9,4 @@ run: mstore
 mstore_assembly: mstore.c
 	gcc -Og -S mstore.c
 clean:
-	rm mstore
+	rm mstore prog
