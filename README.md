@@ -118,7 +118,7 @@ The machine code for x86-64 differs greatly from the original C code. Parts of t
 
 Machine code views the memory as simply a large byte-addressable array. Aggregate data types in C such as arrays are represented in machine code as contiguous collections of bytes.
 
-
+> A single machine instruction performs only a very elementary operation. For example, it might add two numbers stored in registers, transfer data between memory and a register, or conditionally branch to a new instruction address. The compiler must generate sequences of such instructions to implement program constructs such as arithmetic expression evaluation, loops, or procedure calls and returns.
 
 The program memory contains the executable machine code for the program, some information required by the OS, a run-time stack for managing **procedure calls** and returns (这里没准还要回来看), and blocks of memory allocated by the user (by **malloc** function). A program memory is addressed using virtual addresses. More typical programs will only have access to a few megabytes, or perhaps several gigabytes. OS manages this virtual address space, translating virtual addresses into the physical addresses of values in the actual processor memory.
 
@@ -163,7 +163,16 @@ pointer dereferencing. 如果*是在assignment 右边，那就是读取。如果
 ![image.png](https://upload-images.jianshu.io/upload_images/6543506-c6c2fdd05093c55b.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 ![image.png](https://upload-images.jianshu.io/upload_images/6543506-5f315192f49ca35f.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
+#### Procedure call
+
+这个之前leon问到过，procedure call is same as function call or method call in OOD. It utilize stack to return to previous state. 
+
+![8:56](https://upload-images.jianshu.io/upload_images/6543506-e4acbdf24e3d2e3a.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+![14:57](https://upload-images.jianshu.io/upload_images/6543506-c39d7b0b9970c1f8.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
 ### Pushing and poping stack data
+
 ![figure3.9](https://upload-images.jianshu.io/upload_images/6543506-d44f63283c680ffb.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 The pushq instruction provides the ability to push data onto the stack, while the popq instruction pops it. Each of these instructions takes a single operand --the data source for pushing and the data destination for popping. 
 Pushing a quad word value onto the stack involves first decrementing the stack pointer by 8 and then writing the value at the new top-of-stack address. Therefore, the behavior of the instruction pushq %rbp is equivalent to that of the pair of instructions 
@@ -222,6 +231,12 @@ CPU maintains a set of single-bit condition code registers describing attributes
 > **0F**: Overflow flag. The most recent operation caused a two's complement overflow--either negative or positive.
 #### 3.6.3 Jump Instructions
 A jump instruction can cause the execution to switch to a completely new position in the program. These jump destinations are generally indicated in assembly code by a label. 
+
+
+
+#### Data
+
+20分钟左右讲了一下计算机系统的历史，感觉还是挺有意思的，因为早期系统都是直接用assembly language 写的，所以当richie 准备设计一个高级语言的时候，他想如何还能够保留assembly language的一些特性但能够abstract them，然后unix用C来写
 
 ## Chapter 6
 
@@ -735,4 +750,200 @@ Now, this model is so general you could probably use it as an automobile repair 
 ##### IPv4
 
 Internet protocol version 4 had addresses made up of four bytes (4 "octets"), and was commonly written in "dots and numbers" form, like 192.0.2.111.
+
+
+
+## Concurrency programming
+
+notes from https://github.com/angrave/SystemProgramming/wiki/Pthreads%2C-Part-1%3A-Introduction
+
+To use pthreads you will need to include ```pthread.h``` AND you need to compile with ```-pthread``` compiler option. This option tells the compiler that your program requires threading support
+
+To create a thread use the function ```pthread_create```. This function takes four argumens:
+
+```c
+int pthread_create(pthread_t *thread, const pthread_attr_t *attr, 
+                   void *(*start_routine) (void *), void *arg);
+```
+
+* The first is a pointer to variable that will hold the id of the newly created thread.
+* The second is a pointer to attributes that we can use to tweak and tune some of the advanced feature of pthreads.
+* The third is a pointer to a function that we want to run
+* Fourth is a pointer that will be given to our function
+
+The argument ```void *(*start_routine) (void *)``` is difficult to read. It means a pointer that takes a ```void*``` pointer and returns a ```void *``` pointer. It looks like a function declaration except that the name of the function is wrapped with ```(* ...)```
+
+Here's the simplest example:
+
+```c
+#include <stdio.h>
+#include <pthread.h>
+
+void *busy(void *ptr) {
+  //ptr will point to "Hi"
+  puts("Hello World");
+  return NULL;
+}
+
+int main() {
+  pthread_t id;
+  pthread_create(&id, NULL, busy, "Hi");
+  while (1) {} //Loop forever
+}
+```
+
+
+
+If we want to wait for our thread to finish use ```pthread_join```
+
+```c
+void *result;
+pthread_join(id, &result);
+```
+
+In the above example, ```result``` will be ```null``` because the busy function returned ```null```. We need to pass the address of result because ```pthread_join``` will be writing into the contents of our pointer.
+
+#### Part 2
+
+If I call ```pthread_create``` twice, how many stacks does my process have? 
+
+Your process will contain three stacks - one for each thread. Each thread requires a stack because the stack contains automatic variables and the old CPU PC register, so that it can back to executing the calling function after the function is finished. (Makes sense! 因为你要在这个thread结束后回到call它的function，所以有一个单独stack并且contains automatic variables and PC register 就很合理了，因为PC要回到之前的function address)
+
+#### What is the difference between a full process and a thread?
+
+In addition, unlike processes, threads within the smae process can share same global memory (data and heap segments)
+
+### ```exit``` and ```pthread_exit```
+
+```exit``` exit the entire process and sets the processes exit value. All threads inside the process are stopped.
+
+```pthread_exit(void *)``` only stops the calling thread i.e. the thread never returns after calling ```pthread_exit```. The pthread library will automatically finish the process if there are no other threads running. ```pthread_exit(...) is equivalent to returning from the thread's function; both finish the thread and also set the return value (void *pointer) for the thread.
+
+Calling ```pthread_exit``` in the main thread is a common way for simple programs to ensure that all threads finish. For example, in the following program, the ```myfunc``` threads will probably not have time to get started.
+
+```c 
+int main() {
+  pthread_t tid1, tid2;
+  pthread_create(&tid1, NULL, myfunc, "Jabbberwocky");
+  pthread_create(&tid2, NULL, myfunc, "Vorpel");
+  exit(42);
+  
+}
+```
+
+The next two programs will wait for the new threads to finish
+
+```c 
+int main() {
+  pthread_t tid1, tid2;
+  pthread_create(&tid1, NULL, myfunc, "Jabberwocky");
+  pthread_create(&tid2, NULL, myfunc, "Vorpel");
+  pthread_exit(NULL);
+}
+```
+
+Alternatively, we join on each thread (i.e. wait for it to finish) before we return from main (or call exit).
+
+```c
+int main() {
+  pthread_t tid1, tid2;
+  pthread_create(&tid1, NULL, myfunc, "Jabberwocky");
+  pthread_create(&tid2, NULL, myfunc, "Vorpel");
+  void* result;
+  pthread_join(tid1, &result);
+  pthread_join(tid2, &result);
+  return 42;
+}
+```
+
+Note that pthread_exit version creates **thread zombies**, however this is not a long-running processes, so we don't care.
+
+### How can a thread be terminated?
+
+* Returning from te thread function
+* Calling ```pthread_exit```
+* Cancelling the thread with ```pthread_cancel```
+* Terminating the process (e.g. SIGTERM); exit(); returning from ```main```
+
+#### What is the purpose of pthread_join?
+
+* wait for a thread to finish
+* Clean up thread resources
+* Grabs the return value of the thread
+
+#### What happens if you don't call ```pthread_join```?
+
+Finished thread will continue to consume resources. Eventually, if enough threads are created, ```pthread_create``` will fail. In practice, this is only an issue for long-running processes but is not an issue for simple, short-lived processes as all thread resources are automatically freed when the process exits.
+
+#### Should I use ```pthread_exit``` or ```pthread_join```?
+
+Both ```pthread_exit``` and ```pthread_join``` will let the other threads finish on their own. However, only ```pthread_join``` will return to you when the specified thread finishes. ```pthread_exit``` does not wait and will immediately end your thread and give you no chance to continue executing.
+
+To overcome race-condition, we will give each thread a pointer to it's own data area. for example, for each thread we may want to store the id, a starting value and an output value:
+
+```c
+struct T {
+  pthread_t id;
+  int start;
+  char result[100];
+};
+```
+
+ These can be stored in an array -
+
+```c
+struct T *info = calloc(10, sizeof(struct T)); // reserve enough bytes for ten T structures
+```
+
+And each array element passed to each thread -
+
+```c
+pthread_create(&info[i].id, NULL, func, &info[i]);
+```
+
+#### What are condition variables, semaphores, mutexes?
+
+These are synchronization locks that are used to prevent race conditions and ensure proper synchronization between threads running in the same program. In addition, these locks are conceptually identical to the primitives used inside the kernel.
+
+#### sem
+
+The POSIX thread library contains functions for working with semaphores and mutexes. 
+
+A semaphore is fundamentally an integer whose value is never allowed to fall below 0. There are two operations on a semaphore: wait and post. The post operation increment the semaphore by 1, and the wait operations does the following: If the semaphore has a value > 0, the semaphore is decremented by 1
+
+If the semaphore has value 0, the caller will be blocked (busy-waiting or more likely on a queue) until the semaphore has a value larger than 0, and then it is decremented by 1.
+
+we declare a semaphore as:
+
+```sem_t sem;```
+
+where sem_t is a typedef defined in a header file as (apparently) a kind of unsigned char
+
+An example of this might be that we have a set of N interchangeable resources. We start with semaphore S = N. We use a resource, so there are now N-1 available (wait), and we return it when we are done (post). If the semaphore has value 0, there are no resources available, and we have to wait (until someone does a post).
+
+Semaphores are thus used to coordinate concurrent processes.
+
+##### int sem_init(*sem_t * sem, int pshared, unsigned int value);
+
+* purpose: this initilizes the semaphore *sem. The initial value of semaphore will be value. If pshared is 0, the semaphore is **shared** among all threads of a process (and hence need to be visible to all of them such as a global variable). 
+
+##### sem_wait()
+
+int sem_wait(sem_t * sem);
+
+purpose: this implements the wait function described above on the semaphore *sem
+
+##### sem_post()
+
+Prototype: int sem_post(sem_t *sem);
+
+purpose: this implements the post function described above on the semaphore *sem
+
+pthread_mutex_destroy()
+
+int pthread_mutex_destroy(pthread_mutex_t * restrict mutex);
+
+purpose: 
+
+
 
