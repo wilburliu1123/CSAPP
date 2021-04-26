@@ -8,3 +8,8 @@ long arith(long x, long y, long z) {
     long rval = t2 * t5;
     return rval;
 }
+
+long test(long x) {
+    x << 1 | 1;
+    2 * x + 1;
+}
