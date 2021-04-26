@@ -10,6 +10,10 @@ long arith(long x, long y, long z) {
 }
 
 long test(long x) {
-    x << 1 | 1;
-    2 * x + 1;
+    x = x << 1 | 1;
+    return x;
+}
+long test2(long x) {
+    x = 2 * x + 1;
+    return x;
 }
