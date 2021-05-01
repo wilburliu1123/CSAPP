@@ -231,9 +231,10 @@ int conditional(int x, int y, int z) {
  */
 int isLessOrEqual(int x, int y) {
   int neg = 1 << 31;
+  int signX = x >> 31 & 1;
+  int signY = y >> 31 & 1;
   int signY_x = (y + ~x + 1) >> 31 & 1; //sign of y - x;
-
-  return !(((y + ~x + 1) ^ neg) >> 31) + !(x + ~y + 1);
+  return (signX & !signY) | ((!(signX ^ signY)) & !signY_x);
 }
 //4
 /* 
