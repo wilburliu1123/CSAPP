@@ -230,7 +230,6 @@ int conditional(int x, int y, int z) {
  *   Rating: 3
  */
 int isLessOrEqual(int x, int y) {
-  int neg = 1 << 31;
   int signX = x >> 31 & 1;
   int signY = y >> 31 & 1;
   int signY_x = (y + ~x + 1) >> 31 & 1; //sign of y - x;
@@ -302,7 +301,7 @@ unsigned floatScale2(unsigned uf) {
   if ((uf >> 23 & 0xff) == 0x00) {
     return (uf & 0x007fffff << 1) | ((1 << 31) & uf); 
   }
-  return uf + (1 << 23); // normalized value
+  return (uf + (1 << 23)) << 1; // normalized value
 }
 /* 
  * floatFloat2Int - Return bit-level equivalent of expression (int) f
