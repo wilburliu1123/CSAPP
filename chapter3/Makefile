@@ -2,6 +2,8 @@ all: mstore
 
 mstore: mstore.c
 	gcc -o mstore mstore.c
+main: main.c
+	gcc -o main main.c
 prog:
 	gcc -Og -o prog main.c mstore.c
 run: mstore

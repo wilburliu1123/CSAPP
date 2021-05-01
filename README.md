@@ -28,6 +28,7 @@
 #### 硬件组织结构
 ![figure1.4](https://upload-images.jianshu.io/upload_images/6543506-335db5adb3ea47d9.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 这张图给了硬件的组织结构
+
 ##### Buses
 就是用来传输字节的电极管组成的结构。Buses are typically designed to transfer fixed-size chunks of bytes known as words.
 ##### I/O
@@ -310,9 +311,16 @@ Figure 3.11 shows an example of a function that performs arithmetic operations a
 #### 3.5.5 Special arithmetic operations
 As we saw in Section 2.3, multiplying two 64-bit signed or unsigned integers can yield a product that requires 128 bits to represent. The x86-63 instruction set provides limited suport for operations involving 128-bit numbers. Continueing with the naming convention of word, double word, and quad word, Intel refers to a 16 byte quantity as an oct word. 
 
+```assembly
+
+```
+
+
+
 ### 3.6 Control
 Machine code provides two basic low-level mechanisms for implementing conditional behavior: it tests data values and then alters either the control flow or the data flow based on the results of these tests.
 Data-dependent control flow is the more general and more common approach for implementing conditional behavior. The execution order of a set of machine code instructions can be altered with a jump instruction, indicating that control should pass to some other part of the program, possibly contingent on the result of some test. The compiler must generate instruction sequences that build upon this low-level mechanism to implement the control constructs of C. 
+
 #### 3.6.1 Condition codes
 CPU maintains a set of single-bit condition code registers describing attributes of the most recent arithmetic or logical operation. These registers can then be tested to perform conditional branches. These condition codes are the most useful:
 > **CF**: Carry flag. The most recent operation generated a carry out of the most significant bit. Used to detect overflow for unsigned operations. 
