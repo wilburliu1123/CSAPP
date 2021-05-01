@@ -261,24 +261,45 @@ int logicalNeg(int x) {
  *  Rating: 4
  */
 int howManyBits(int x) {
-  int negSign = (x >> 31) & 1;
-  int union_set = ((negSign | (~negSign + 1)) >> 31); //union set is all one if negSign is 1, 0 otherwise
-  int res1 = ~x & union_set; // get all one's if x is neg, otherwise 0
-  int res2 = x & (~union_set); // get all one's if x is pos, otherwise 0
-  int newX = res1 + res2; // one of res1 and res2 will be 0 and we will take the result and assign it to newX
-  // need to simulate in order to understand
-  int allOne = newX | newX >> 16;
-  allOne = allOne | allOne >> 8;
-  allOne = allOne | allOne >> 4;
-  allOne = allOne | allOne >> 2;
-  allOne = allOne | allOne >> 1;
-  //count
-  int count = (allOne & 0x55555555) + ((allOne >> 1) & 0x55555555); //0x55 is 0101 0101
-  count = (count & 0x33333333) + ((count >> 2) & 0x33333333);  // 0x33 = 00110011
-  count = (count & 0x0f0f0f0f) + ((count >> 4) & 0x0f0f0f0f);  // 0x0f = 00001111
-  count = (count & 0x0000ffff) + ((count >> 16) & 0x0000ffff); // this gives last 16 bits of 1
-
+    // flip if negative => remove the duplicated sign bits
+  int negativeFlag = (x >> 31) & 1;
+  // conditional
+  int mappedFlag = ((negativeFlag | (~negativeFlag + 1)) >> 31);
+  int yResult = ~x & mappedFlag;
+  int zResult = x & (~mappedFlag);
+  int newX = yResult + zResult;
+  // right align & fill with ones
+  int full1s = newX | newX >> 16;
+  full1s = full1s | full1s >> 8;
+  full1s = full1s | full1s >> 4;
+  full1s = full1s | full1s >> 2;
+  full1s = full1s | full1s >> 1;
+  // count ones
+  int count = (full1s & 0x55555555) + ((full1s >> 1) & 0x55555555);
+  count = (count & 0x33333333) + ((count >> 2) & 0x33333333);
+  count = (count & 0x0F0F0F0F) + ((count >> 4) & 0x0F0F0F0F);
+  count = (count & 0x00FF00FF) + ((count >> 8) & 0x00FF00FF);
+  count = (count & 0x0000FFFF) + ((count >> 16) & 0x0000FFFF);
+  // plus one (sign bit)
   return count + 1;
+  // int negSign = (x >> 31) & 1;
+  // int union_set = ((negSign | (~negSign + 1)) >> 31); //union set is all one if negSign is 1, 0 otherwise
+  // int res1 = ~x & union_set; // get all one's if x is neg, otherwise 0
+  // int res2 = x & (~union_set); // get all one's if x is pos, otherwise 0
+  // int newX = res1 + res2; // one of res1 and res2 will be 0 and we will take the result and assign it to newX
+  // // need to simulate in order to understand
+  // int allOne = newX | newX >> 16;
+  // allOne = allOne | allOne >> 8;
+  // allOne = allOne | allOne >> 4;
+  // allOne = allOne | allOne >> 2;
+  // allOne = allOne | allOne >> 1;
+  // //count
+  // int count = (allOne & 0x55555555) + ((allOne >> 1) & 0x55555555); //0x55 is 0101 0101
+  // count = (count & 0x33333333) + ((count >> 2) & 0x33333333);  // 0x33 = 00110011
+  // count = (count & 0x0f0f0f0f) + ((count >> 4) & 0x0f0f0f0f);  // 0x0f = 00001111
+  // count = (count & 0x0000ffff) + ((count >> 16) & 0x0000ffff); // this gives last 16 bits of 1
+
+  // return count + 1;
 }
 //float
 /* 
