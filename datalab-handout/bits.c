@@ -301,7 +301,7 @@ unsigned floatScale2(unsigned uf) {
   if ((uf >> 23 & 0xff) == 0x00) {
     return (uf & 0x007fffff << 1) | ((1 << 31) & uf); 
   }
-  return (uf + (1 << 23)) << 1; // normalized value
+  return (uf<<1) + (1 << 23); // normalized value
 }
 /* 
  * floatFloat2Int - Return bit-level equivalent of expression (int) f
