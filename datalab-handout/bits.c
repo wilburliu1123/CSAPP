@@ -323,12 +323,12 @@ int floatFloat2Int(unsigned uf) {
   int frac = uf & 0x7fffff; //get last 23 bits from fractional field of float number
   int nFrac = 0x1000000 + frac;
   if (exp < 0 || e == 0) return 0;
-  if (exp >= 31 || e == 0xff) return 0x80000000; // check for infinity or NaN
+  if (exp >= 31 || e == 0xff) return 0x80000000; // check for overflow or infinity or NaN
   int res;
   if (exp > 24) {
     res = nFrac << (exp -24);
   } else {
-    res = nFrac >> (exp - exp);
+    res = nFrac >> (24 - exp);
   }
 
   if (sign) {
@@ -362,7 +362,7 @@ unsigned floatPower2(int x) {
     //normalized
     if (x >= -126 && x <= 127) {
       int e = (x + 127) << 23;
-
+      return e;
     }
     if (x >= 128) {
       int e = 0xff << 23;
