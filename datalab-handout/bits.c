@@ -299,7 +299,7 @@ unsigned floatScale2(unsigned uf) {
   if (uf == 0 || uf == (1 << 31)) return uf; //0 or -(2^31) overflow for neg
   // denormalized
   if (((uf >> 23) & 0xff) == 0x00) {
-    return (uf & 0x007fffff << 1) | ((1 << 31) & uf); 
+    return ((uf & 0x007fffff) << 1) | ((1 << 31) & uf); 
   }
   return uf + (1 << 23); // normalized value
 }
