@@ -264,7 +264,7 @@ int howManyBits(int x) {
   int negSign = (x >> 31) & 1;
   int union_set = ((negSign | (~negSign + 1)) >> 31); //union set is all one if negSign is 1, 0 otherwise
   int res1 = ~x & union_set; // get all one's if x is neg, otherwise 0
-  int res2 = x & ~union_set; // get all one's if x is pos, otherwise 0
+  int res2 = x & (~union_set); // get all one's if x is pos, otherwise 0
   int newX = res1 + res2; // one of res1 and res2 will be 0 and we will take the result and assign it to newX
   // need to simulate in order to understand
   int allOne = newX | newX >> 16;
