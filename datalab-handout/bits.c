@@ -293,15 +293,26 @@ int howManyBits(int x) {
  *   Rating: 4
  */
 unsigned floatScale2(unsigned uf) {
-  if ((uf >> 23 & 0xff) == 0xff) {
-    return uf; // exp value in float representation are 1111 (infinity or NaN)
-  }
-  if (uf == 0 || uf == (1 << 31)) return uf; //0 or -(2^31) overflow for neg
-  // denormalized
-  if ((uf >> 23 & 0xff) == 0x00) {
-    return (uf & 0x007fffff << 1) | ((1 << 31) & uf); 
-  }
-  return (uf<<1) + (1 << 23); // normalized value
+  // if ((uf >> 23 & 0xff) == 0xff) {
+  //   return uf; // exp value in float representation are 1111 (infinity or NaN)
+  // }
+  // if (uf == 0 || uf == (1 << 31)) return uf; //0 or -(2^31) overflow for neg
+  // // denormalized
+  // if ((uf >> 23 & 0xff) == 0x00) {
+  //   return (uf & 0x007fffff << 1) | ((1 << 31) & uf); 
+  // }
+  // return (uf<<1) + (1 << 23); // normalized value
+    //0
+  if(uf == 0 || uf == (1 << 31))
+    return uf;
+  //Special value
+  if(((uf >> 23) & 0xff) == 0xff)
+    return uf;
+  //Denormalized
+  if(((uf >> 23) & 0xff) == 0x00) 
+    return ((uf & 0x007FFFFF) << 1) | ((1 << 31) & uf);
+  // Normalized
+  return uf + (1<<23);
 }
 /* 
  * floatFloat2Int - Return bit-level equivalent of expression (int) f
