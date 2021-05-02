@@ -165,10 +165,8 @@ Case 4 Positive Overflow
 
 ## Chapter3
 
-Early days programmer need to write low level assembly code. Now with modern optimizing compilers, the generated code is usually at least as efficient as what a skilled assembly-language programmer would write by hand.
-
 ### Why need to understand machine code? 
-> So why should we spend our time learning machine code? Even though compilers do most of the work in generating assembly code, being able to read and understand it is an important skill for serious programmers. By invoking the compiler with appropriate command-line parameters, the compiler will generate a file showing its output in assembly code form. By reading this code, we can understand the optimization capabilities of the compiler and analyze the underlying inefficiencies in the code.
+> So why should we spend our time learning machine code? Even though com- pilers do most of the work in generating assembly code, being able to read and understand it is an important skill for serious programmers. By invoking the compiler with appropriate command-line parameters, the compiler will generate a file showing its output in assembly-code form. By reading this code, we can under- stand the optimization capabilities of the compiler and analyze the underlying inefficiencies in the code.
 
 Programmers seeking to maximize the performance of a critical section of code often try different variations of the source code, each time compiling and examining the generated assembly code to get a sense of how efficiently the program will run. Furthermore, there are times when the layer of abstraction provided by a high-level language hides information about the run-time behavior of a program that we need to understand. For example, when writing concurrent programs using a thread package, as covered in Chapter12, **it is important to understand how program data are shared or kept private by the different threads and precisely how and where shared data are accessed.** Such information is visible at the machine-code level. **As another example, many of the ways programs can be attacked, allowing malware to infest a system, involve nuances of the way programs store their run-time control information.** Many attacks involve exploiting weaknesses in system programs to overwrite information and thereby take control of the system. Understanding how these vulnerabilities arise and how to guard against them requires a knowledge of machine-level representation of programs. 
 
@@ -179,25 +177,21 @@ The need for programmers to learn machine code has shifted over the years from o
 ![p34](https://upload-images.jianshu.io/upload_images/6543506-954f1f48c974d1e6.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 ![p36](https://upload-images.jianshu.io/upload_images/6543506-2db892c25ab57f0f.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
-
-
-
 x86 is intel product line
 ![x86](https://upload-images.jianshu.io/upload_images/6543506-c6b344ed958fcb71.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 ![x86 product line](https://upload-images.jianshu.io/upload_images/6543506-8d538373180ddd18.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
-
 ![moore's law](https://upload-images.jianshu.io/upload_images/6543506-2b294f4c58845680.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
-
 ### Instruction set architecture
 The format and behavior of a machine-level program is defined by the *instruction set architecture* or **ISA**. Most ISA describe the behavior of a program as if each instruction is executed in sequence, with one instructino completing before the next one begins. 
 ![ISA definition](https://upload-images.jianshu.io/upload_images/6543506-bfb12b1a4cf5e48a.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
-
 机器底层的实现逻辑永远是简单的，只不过经过了各种组合以及叠加才变得复杂并且能够实现近乎神奇般的功能
 就好像air foil的作用，能组成gas turbines，也可以用来做机翼
 ![air foil](https://upload-images.jianshu.io/upload_images/6543506-32af1979063ab889.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 ### Assembly code
+
 Assembly-code representation is very close to machine code. Its main feature is that it is a more readable textual format.
+
 > Whereas C provides a model in which objects of different data types can be declared and allocated in memory, machine code views the memory as simply a large byte-addressable array. Aggregate data types in C such as arrays and structures are represented in machine code as contiguous collections of bytes.
 
 The machine code for x86-64 differs greatly from the original C code. Parts of the processor state are visible that normally are hidden from the C programmer.
@@ -213,8 +207,6 @@ Machine code views the memory as simply a large byte-addressable array. Aggregat
 
 The program memory contains the executable machine code for the program, some information required by the OS, a run-time stack for managing **procedure calls** and returns (这里没准还要回来看), and blocks of memory allocated by the user (by **malloc** function). A program memory is addressed using virtual addresses. More typical programs will only have access to a few megabytes, or perhaps several gigabytes. OS manages this virtual address space, translating virtual addresses into the physical addresses of values in the actual processor memory.
 
-
-
 ### running code on linux
 ![Snip20210325_15.png](https://upload-images.jianshu.io/upload_images/6543506-0726fdc4841ee895.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 #### rax rbp 名字由来
@@ -225,6 +217,8 @@ The program memory contains the executable machine code for the program, some in
 下面这张图很好表达了register 不同名字以及他们对应的大小
 ![figure3.2](https://upload-images.jianshu.io/upload_images/6543506-69bc0859534a16f7.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 ![legacy](https://upload-images.jianshu.io/upload_images/6543506-d96c8473b2209e29.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![Operand Forms](https://upload-images.jianshu.io/upload_images/6543506-23f427bfb199468c.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![Procedure data flow 22:08](https://upload-images.jianshu.io/upload_images/6543506-1554609d4143140e.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 ### Data movement instructions
 Among the most heavily used instructions are those that copy data from one location to another. The generality of the operand notation allows a simple data movement instruction to express a range of possibilities that in many machines would require a number of different instructions. 
@@ -253,21 +247,18 @@ pointer dereferencing. 如果*是在assignment 右边，那就是读取。如果
 下面是我的c code， 用gcc -Og -S compile之后的assembly code 也是对应上了，可以加深对于how register works 的理解
 ![image.png](https://upload-images.jianshu.io/upload_images/6543506-c6c2fdd05093c55b.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 ![image.png](https://upload-images.jianshu.io/upload_images/6543506-5f315192f49ca35f.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
-
 #### Procedure call
 
 这个之前leon问到过，procedure call is same as function call or method call in OOD. It utilize stack to return to previous state. 
 
 ![8:56](https://upload-images.jianshu.io/upload_images/6543506-e4acbdf24e3d2e3a.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
-
 ![14:57](https://upload-images.jianshu.io/upload_images/6543506-c39d7b0b9970c1f8.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 ### Pushing and poping stack data
-
 ![figure3.9](https://upload-images.jianshu.io/upload_images/6543506-d44f63283c680ffb.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 The pushq instruction provides the ability to push data onto the stack, while the popq instruction pops it. Each of these instructions takes a single operand --the data source for pushing and the data destination for popping. 
 Pushing a quad word value onto the stack involves first decrementing the stack pointer by 8 and then writing the value at the new top-of-stack address. Therefore, the behavior of the instruction pushq %rbp is equivalent to that of the pair of instructions 
-```
+```c
 subq $8, %rsp //Decrement stack pointer
 movq %rbp, (%rsp)  //store %rbp on stack
 ```
@@ -276,6 +267,7 @@ except that the pushq instruction is encoded in the machine code as a single byt
 The third column of Figure 3.9 illustrates the effect of executing the instruction opoq %edx immediately after executing the **pushq**. Value 0x123 is read from memory and written to register %rdx. Register %rsp is incremented back to 0x108. As shown in the figure, the value 0x123 remains at memory location 0x104 until it is overwritten (e.g. by another push operation). However, the stack popo is always considered to be the address indicated by %rsp.
 
 Since the stack is contained in the same memory as the program code and other forms of program data, programs can access arbitrary positions within the stack using the standard memory addressing methods. For example, assuming the topmost element of the stack is quad word, the instruction **movq 8(%rsp), %rdx will copy the second quad word from the stack to register %rdx
+![45:28](https://upload-images.jianshu.io/upload_images/6543506-e040d856de892b0e.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 ### 3.5 Arithmetic and logical operations
 Most of the operations are given as instructions classes, as they can have different variants with different operand sizes. (same as ```movb, movw, movl, movq```) b stands for byte, w stands for word, l stands for double word, q stands for quad word
@@ -297,40 +289,198 @@ will set register %rax to 5x + 7. Compilers often find clever uses of leaq that 
 ![1:11:10](https://upload-images.jianshu.io/upload_images/6543506-c5b8ec4a4cd45b59.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 Operations in the second group are unary operations (位运算）, with the single operand serving as both source and destination. This operand can be either a register or a memory location. For example, the instruction incq(%rsp) causes the 8-byte element on the top of the stack to be incremented. This syntax is reminiscnet of the C increment(++) and decrement(--) operators.
+![1:07:47](https://upload-images.jianshu.io/upload_images/6543506-dc9467aabb16db2d.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 The third group consists of binary operations, where the second operand is used as both a source and a destination. This syntax is reminiscent of the C assignment operators, such as x -= y. Observe, however, that the source operand is given first and the destination second. This looks peculiar for noncommutative operations. For example, the instruction subq %rax, %rdx decrements register %rdx by the value %rax The first operand can be either an immediate value, a register, or a memory location. The second can be either a register or a memory location. As with the MOV instructions, the two operands cannot both be memory locations. Note that when the second operand is a memory location, the processor must read the value from memory, perform the operation, and then write the result back to memory.
 
 #### 3.5.3 shift operations
 The final group consists of shift operations, where the shift amount is given first and the value to shift is given second. Both arithmetic and logical right shifts are possible. the different shift instructions can specify the shift amount either as an immediate value or with the single-byte register %cl. In principle, having a 1-byte shift amount would make it possible to encode shift amounts ranging up to 2^8-1 = 255. With x86-64, a shift instruction operating on data values that are w bits long determines the shift amount from the low-order m bits of register %cl, where 2^m = w. The higher-order bits are ignored. So, for example, when register %cl has hexadecimal value 0xFF, then instruction salb would shift by 7 (one byte), while salw would shift by 15(2byte). sall would shift by 31, and salq would shift by 63.
 
+There are two names for the left shift instruction: SAL and SHL, both have same effect, filling from the right with zeros. The right shift instructions differ in that SAR performs an arithmetic shift (fill with copies of the sign bit), for example -8 >> 1 gives 1100 in four digit representation. The destination operand of a shift operation can be either a register or a memory location. Right shift has two type (arithmetic and logical)
+
 #### 3.5.4 discussion
 We see that most of the instructions shown in figure 3.10 can be used for either unsigned or two's complement arithmetic. Only right shifting requires instructions that differentiate between signed versus unsigned data. This is one of the features that makes two's-complement arithmetic the preferred way to implement signed integer arithmetic. 
-
+talk about figure 3.11 as example
 Figure 3.11 shows an example of a function that performs arithmetic operations and its translation into assembly code. Arguments x, y, and z are initially stored in registers %rdi, %rsi, and %rdx, respectively. the assembly-code instructions correspond closely with the lines of C source code. 
 
 #### 3.5.5 Special arithmetic operations
 As we saw in Section 2.3, multiplying two 64-bit signed or unsigned integers can yield a product that requires 128 bits to represent. The x86-63 instruction set provides limited suport for operations involving 128-bit numbers. Continueing with the naming convention of word, double word, and quad word, Intel refers to a 16 byte quantity as an oct word. 
-
-```assembly
-
+```c
+void remdiv(long x, long y, long *qp, long *rp) {
+  long q = x/y;
+  long r = x%y;
+  *qp = q;
+  *rp = r;
+}
 ```
-
-
-
+```assembly
+ remdiv:
+  movq    %rdx, %r8
+  movq    %rdi, %rax
+  cqto 
+  idivq     %rsi
+  movq    %rax, (%r8)
+  movq    %rdx, (%rcx)
+  ret
+```
 ### 3.6 Control
 Machine code provides two basic low-level mechanisms for implementing conditional behavior: it tests data values and then alters either the control flow or the data flow based on the results of these tests.
 Data-dependent control flow is the more general and more common approach for implementing conditional behavior. The execution order of a set of machine code instructions can be altered with a jump instruction, indicating that control should pass to some other part of the program, possibly contingent on the result of some test. The compiler must generate instruction sequences that build upon this low-level mechanism to implement the control constructs of C. 
+![5:02](https://upload-images.jianshu.io/upload_images/6543506-be1cde9d9c48c8c6.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+%rsp is stack pointer to current stack top
+%rip is instruction pointer to current instruction
 
 #### 3.6.1 Condition codes
+Machine code provides two basic low-level mechanisms for implementing conditional behavior:
+1. it tests data values and then alters either the control flow
+2. the data flow based on the results of these tests
+
+Book talked about data-dependent control flow first because it is more general
+Normally, both statements in C and instructions in machine code are executed sequentially, in the order they appear in the program. **jump instruction can alter the execution order**, indicating that control should pass to some other part of the program, possibly result from some test. 
 CPU maintains a set of single-bit condition code registers describing attributes of the most recent arithmetic or logical operation. These registers can then be tested to perform conditional branches. These condition codes are the most useful:
 > **CF**: Carry flag. The most recent operation generated a carry out of the most significant bit. Used to detect overflow for unsigned operations. 
 > **ZF**: Zero flag. The most recent operation yielded zero.
 > **SF**: Sign flag. The most recent operation yielded a negative value.
-> **0F**: Overflow flag. The most recent operation caused a two's complement overflow--either negative or positive.
+> **OF**: Overflow flag. The most recent operation caused a two's complement overflow--either negative or positive.
+
+Rather than reading the condition codes directly, there are three common ways of using the condition codes:
+1. we can set a single byte to 0 or 1 depending on some combination of the condition codes
+2. we canconditionally jump to some other part of the program
+3. we can conditionally transfer data. 
+> In addition to the setting of condition codes by the instructions of Figure 3.10, there are two instruction classes (having 8-, 16-, 32-, and 64-bit forms) that set condition codes without altering any other registers; 
+
+compare instruction
+cmpq src2, src1
+cmpq b, a like computing a-b without setting destination
+
+![3.13](https://upload-images.jianshu.io/upload_images/6543506-d2b492e36e508f5b.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+![figure 3.14](https://upload-images.jianshu.io/upload_images/6543506-9842734c337f6009.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+Test instruction
+testq src2, src1
+testq b, a like computing a&b without setting destination
 #### 3.6.3 Jump Instructions
-A jump instruction can cause the execution to switch to a completely new position in the program. These jump destinations are generally indicated in assembly code by a label. 
+A jump instruction can cause the execution to switch to a completely new position in the program. These jump destinations are generally indicated in assembly code by a *label*. 
+
+![figure 3.15](https://upload-images.jianshu.io/upload_images/6543506-102038c1db740cc0.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+#### 3.6.4 Jump instruction Encodings
+For the most part, we will not concern ourselves with the detailed format of machine code. on the other hand, understanding how the targets of jump instructions are encoded will become more important when we study linking in Chapter 7. In addition, it helps when interpreting the output of a disassembler. In assembly code, jump targets are written using symbolic labels. The assembler, and later the linker, generate the proper encodings of the jump targets. there are several different encodings for jumps, but some of the most commonly used ones are PC relative. That is, they encode the difference between the address of the target instruction and the address of the instruction immediately following the jump. These offsets can be encoded using 1, 2, or 4 bytes. A second encoding method is to give an "absolute" address, using 4 bytes to directly specify the target. 
+* conditional control
+* conditional move 
+> The assembler and linker select the appropriate encodings of the jump destinations. 
+
+#### 3.6.5 Implementing conditional branches with conditional control
+The most general way to translate conditional expressions and statements from C into machine code is to use combinations of conditional and unconditional jumps. For example, Figure 3.16 shows the C code for a function that computes the absolute value of the difference of two numbers . The function also has a side effect of incrementing one of two counters, encoded as global variables It_cnt and ge_cnt. GCC generates the assembly code shown as Figure 3.16c. 
+> 3.16b shows goto version in C code of the original code
+
+![figure3.16](https://upload-images.jianshu.io/upload_images/6543506-48a9e3db1f9ccd70.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+Assembly implementation typically adheres to the following form, where we use C syntax to describe the control flow:
+```c
+  t = test-expr;
+  if (!t) {
+    goto false;
+  then-statement
+  goto done;
+false:
+    else-statement;
+done:
+```
+
+why conditional data transfers can outperform code based on conditional control transfers? 
+> As we will see in Chapters 4 and 5, processors achieve high performance through pipelining 
+> When the machine encounters a conditional jump (re- ferred to as a “branch”), it cannot determine which way the branch will go until it has evaluated the branch condition. Processors employ sophisticated branch pre- diction logic to try to guess whether or not each jump instruction will be followed. Mispredicting a jump, on the other hand, requires that the processor discard much of the work it has already done on future instructions and then begin filling the pipeline with instructions starting at the correct location. In a typical application, the outcome of the test x < y is highly unpredictable, and so even the most sophisticated branch prediction hardware will guess correctly only around 50% of the time. In addition, the computations performed in each of the two code sequences require only a single clock cycle. As a consequence, the branch misprediction penalty dominates the performance of this function. 
+
+As described in class lecture, the CPU is like a boat with full speed. So it's hard for it to turn to different direction. Rather tell it to turn, we could run it until it have to turn
+
+To understand how conditional operations can be implemented via condi- tional data transfers, consider the following general form of conditional expression and assignment:
+```c
+v = test-expr ? then-expr : else-expr;
+```
+for the code based on a conditional move, both the then-expr and the else-expr are evaluated, with the final value choasen based on the evaluation test-expr. This can be described by the following abstract code:
+```c
+v = then-expr;
+ve = else-expr;
+t = test-expr;
+if (!t) v = ve;
+```
+The final statement in this sequence is implemented with a conditional move -- value ve is copied to v only if test condition t does not hold.
+
+at the end, they still use conditional control transfer more.. So conditional data transfer is an alternative
+> Compilers must take into account the relative performance of wasted computation versus the potential for performance penalty due to branch misprediction. In truth, they do not really have enough information to make this decision reliably; for example, they do not know how well the branches will follow predictable patterns. Our experiments with gcc indicate that it only uses conditional moves when the two expressions can be computed very easily, for example, with single add instructions. In our experience, gcc uses conditional control transfers even in many cases where the cost of branch misprediction would exceed even more complex computations.
 
 
+#### 3.6.7 loops
+C provides several looping 
+* do-while
+* while
+* for
+No corresponding instructions exist in machine code. Combinations of conditional tests and jumps are used to implement the effect of loops
+##### do while
+```c
+do
+  body-statement;
+  while (test-expr);
+```
+![figure 3.19](https://upload-images.jianshu.io/upload_images/6543506-09bbfcb585331908.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+##### while
+```c
+while (test-expr)
+  body-statement
+```
+First translation method
+![figure 3.20](https://upload-images.jianshu.io/upload_images/6543506-097e770e12588dd5.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+The second translation method, which we refer to as *guarded do*, first transforms the code into a do-while loop by using a conditional branch to skip over the loop if the initial test fails. 
+
+> GCC follows this strategy when compiling with higher levels of optimization, for example, with command-line option -O1. This method can be expressed by the following template for translating from the general while loop form to a do-while loop:
+```c
+t = test-expr;
+if (!t)
+  goto done;
+do
+  body-statement;
+  while (test-expr);
+done:
+```
+![figure 3.21](https://upload-images.jianshu.io/upload_images/6543506-c88ae3105a16264b.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+##### for loop
+```c
+for (init-expr; test-expr; update-expr)
+  body-statement
+```
+The C language standard states (with one exception), that the behavior of such a loop is identical to the following code using a while loop:
+```c
+init-expr;
+while (test-expr) {
+  body-statement;
+  update-expr;
+}
+```
+> the program first evaluates the initialization expression init-expr. It enters a loop where it first evaluates the test condition test-expr, exiting if the test fails, then executes the body of the loop body-statement, and finally evaluates the update expression update-expr.
+
+##### switch statement
+> Not only do they make the C code more readable, but they also allow an efficient implementation using a data structure called a jump table. 
+
+A jump table is an array where entry i is the address of a code segment implementing the action the program should take when the switch index equals i. The code performs an array reference into the jump table using the switch index to determine the target for a jump instruction.
+
+highlighted in picture is the assembly code that referencing a jump table
+![figure 3.22 &3.33](https://upload-images.jianshu.io/upload_images/6543506-92b0b99a1eeb40d4.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+
+![1:00:55](https://upload-images.jianshu.io/upload_images/6543506-f1e2e6467ee1a54b.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+![1:13:13](https://upload-images.jianshu.io/upload_images/6543506-eeefdc8179c871f6.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+#### 3.7 procedures
+Procedures come in many guises in different programming languages -- functions, methods, subroutines, handlers, and so on
+The following will be involve with procedures
+* Passing control. The program counter must be set to the starting address of the code for Q upon entry and then set to the instruction in P following the call to Q upon return.
+* Passing data. P must be able to provide one or more parameters to Q, and Q must be able to return a value back to P.
+* Allocating and deallocating memory. Q may need to allocate space for local variables when it begins and then free that storage before it returns.
+
+![figure3.25](https://upload-images.jianshu.io/upload_images/6543506-d8c1cefa2538b6b3.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 #### Data
 
