@@ -141,6 +141,12 @@ NOTES:
  *   Legal ops: ~ &
  *   Max ops: 14
  *   Rating: 1
+ * 1001 x
+ * 0001 y
+ * 0110
+ * 1110 -> ~(x & y)
+ *          &
+ * 1001 -> ~(~x & ~y)
  */
 int bitXor(int x, int y) {
   return ~(~x & ~y) & ~(x & y);
@@ -163,7 +169,7 @@ int tmin(void) {
  *   Legal ops: ! ~ & ^ | +
  *   Max ops: 10
  *   Rating: 1
- */
+ */ 
 int isTmax(int x) {
   int min = 1 << 31;
   return !(~x ^ min);
@@ -326,7 +332,7 @@ int floatFloat2Int(unsigned uf) {
   if (exp >= 31 || e == 0xff) return 0x80000000; // check for overflow or infinity or NaN
   int res;
   if (exp > 24) {
-    res = nFrac << (exp -24);
+    res = nFrac << (exp - 24);
   } else {
     res = nFrac >> (24 - exp);
   }
@@ -339,7 +345,7 @@ int floatFloat2Int(unsigned uf) {
 }
 /* 
  * floatPower2 - Return bit-level equivalent of the expression 2.0^x
- *   (2.0 raised to the power x) for any 32-bit integer x.
+ *   (2.0 raised to the power x) for any 32-bit integer x. 
  *
  *   The unsigned value that is returned should have the identical bit
  *   representation as the single-precision floating-point number 2.0^x.

@@ -181,6 +181,7 @@ x86 is intel product line
 ![x86](https://upload-images.jianshu.io/upload_images/6543506-c6b344ed958fcb71.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 ![x86 product line](https://upload-images.jianshu.io/upload_images/6543506-8d538373180ddd18.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 ![moore's law](https://upload-images.jianshu.io/upload_images/6543506-2b294f4c58845680.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
 ### Instruction set architecture
 The format and behavior of a machine-level program is defined by the *instruction set architecture* or **ISA**. Most ISA describe the behavior of a program as if each instruction is executed in sequence, with one instructino completing before the next one begins. 
 ![ISA definition](https://upload-images.jianshu.io/upload_images/6543506-bfb12b1a4cf5e48a.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
@@ -480,11 +481,203 @@ The following will be involve with procedures
 * Passing data. P must be able to provide one or more parameters to Q, and Q must be able to return a value back to P.
 * Allocating and deallocating memory. Q may need to allocate space for local variables when it begins and then free that storage before it returns.
 
+if the procedure can be stored on the register, then this procedure call won't be allocated to new spaces, 
+when an x86 procedure requires storage beyond what it can hold in registers, it allocates space on the stack. (by decreasing sp address with appropriate size)
+and when Q finishes, the caller address will be restored on sp and local storage it has allocated can be freed. (increase sp)
+
 ![figure3.25](https://upload-images.jianshu.io/upload_images/6543506-d8c1cefa2538b6b3.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
-#### Data
+##### 3.7.2 control transfer
+Passing control from P to Q simply set the program counter (PC) to the starting address of the code for Q.
+```call Q``` will record the P address when it is invoked. 
 
-20分钟左右讲了一下计算机系统的历史，感觉还是挺有意思的，因为早期系统都是直接用assembly language 写的，所以当richie 准备设计一个高级语言的时候，他想如何还能够保留assembly language的一些特性但能够abstract them，然后unix用C来写
+![figure3.27](https://upload-images.jianshu.io/upload_images/6543506-ade9bc3e4d695b99.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+
+The effect of the call is to push the return address 0x400568 onto the stack and to jump to the first instruction in function multstore continues until it hits the ret instruction at address 0x40054d. This instruction pops the value 0x400568 from the stack and jumps to this address, resuming the excution of main just after the call instruction.
+
+As a more detailed example of passing control to and from procedures, Figure 3.27 shows the disassembled code for two functions, top and leaf, as well as the portion of code in function main where top gets called. 
+
+stack pointer is a pointer to a value of memory space. When function returns, it dereference the sp to get its value and set that value back to the PC.
+
+##### 3.7.3 data transfer
+In addition to passing control to a procedure when called, and then back again when the procedure returns, procedure calls may involve passing data as arguments, and returning from a procedure may also involve returning a value. With x86-64, most of these data passing to and from procedures take place via registers. For example, we have already seen numerous examples of functions where arguments are passed in registers %rdi, %rsi, and others. and where values are returned in register %rax. 
+
+When procedure P calls procedure Q, the code for P must first copy the arguments into the proper registers. Similarly, when Q returns back to P, the code for P can access the returned value in register %rax. In this section, we explore these conventions in greater detail.
+
+With x86-64, up to six integral (i.e. integer and pointer) arguments can be passed via registers. The registers are used in a specified order, with the name used used for a register depending on the size of the data type being passed. these are shown in Figure 3.28. Arguments are allocated to these registers according to their 
+ordering in the argument list. Arguments smaller than 64 bits can be accessed using the appropriate subsection of the 64-bit register. For example, if the first argument is 32 bits, it can be accessed as %edi.
+
+![figure 3.28](https://upload-images.jianshu.io/upload_images/6543506-8eba091013cff53c.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+When a function has more than six integral arguments, the other ones are passed on the stack. Assume that procedure P calls procedure Q with n integral arguments, such that n > 6. Then the code for P must allocate a stack frame with enough storage for arguments 7 at the top of the stack. When passing parameters on the stack, all data sizes are rounded up to be multiples of eight. With the arguments in place, the program can then execute a **call** instruction to transfer control to procedure Q. Procedure Q can access its arguments via registers and possibly from the stack. If Q, in turn, calls some function that has more than six arguments, it can allocate space within its stack frame for these, as is illustrated by the area labeled "Argument build area" in Figure 3.25.
+
+In summary, the procedure will copy the variable on to the stack first and then give the control to the callee
+
+As an example of argument passing, consider the C function proc shown in Figure 3.29(a). This function has eight arguments, including integers with different numbers of bytes(8, 4, 2, and 1), as well as different types of pointers, each of which is 8 bytes.
+
+The assembly code generated for proc is shown in Figure 3.29(b). The first 
+![figure 3.29](https://upload-images.jianshu.io/upload_images/6543506-08c33bf36d3666e2.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+##### 3.7.4 local storage on the stack
+Most of the procedure examples we have seen so far did not require any local storage beyond what could be held in registers. At times, however, local data must be stored in memory. 
+suppose procedure P calls procedure Q, and Q then executes and returns back to P.
+Common cases of this include these:
+* There are not enough registers to hold all of the local data.
+* The address operator '&' is applied to a local variable, and hence we must be able to generate an address for it.
+* Some of the local variables are arrays or structures and hence must be accessed by array or structure references. We will discuss this possibility when we describe how arrays and structures are allocated.
+
+Typically, a procedure allocates space on the stack frame by decrementing the stack pointer. This results in the portion of the stack frame labeled "Local variables" in figure 3.25
+As an example of the handling of the address operator, consider the two functions shown in Figure 3.31(a)
+
+The code for caller starts by decrementing the stack pointer by 16; this effectively allocates 16 bytes on the stack. Letting S denote the value of the stack pointer, we can see that the code computes &arg2 as S+8, &arg1 as S. Therefore, local variables arg1 and arg2 are stored within the stack frame at offsets 0 and 8 relative to the stack pointer.
+![figure 3.31](https://upload-images.jianshu.io/upload_images/6543506-a75383e57809ef68.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+Then when the function returns caller will get arg1 value by reading from (%rsp) and read arg2 from 8(%rsp) increase the pointer address by 8 byte then subtract it from arg1 (stored in rdx)
+
+![figure 3.32](https://upload-images.jianshu.io/upload_images/6543506-fe053688b5b51ad6.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+##### 3.7.5 Local Storage in Registers
+In order to make sure callee does not overwrite some register value that the caller planned to use later. x86 adopts a uniform set of conventions for register usage that must be respected by all procedures.
+> By convention, registers %rbx, %rbp, and %r12–%r15 are classified as callee- saved registers.
+
+callee saved register must be preserved by the callee.
+![figure3.34](https://upload-images.jianshu.io/upload_images/6543506-c90c89b1463d4129.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+value x and y won't be changed after this procedure call.
+
+##### recursive call
+![figure3.35](https://upload-images.jianshu.io/upload_images/6543506-e1a167f2e6b9d5ca.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+it is naturally implemented by the stack when we recursively call the function because %rbx will store the data by the callee and the %rax will give the return result. When condition has met, return. If not, it will keep calling itself and store rbx
+
+### 3.8 Array Allocation and access
+Arrays in C are one means of aggregating scalar data into larger data types. C uses a particularly simple implementation of arrays, and hence the translation into machine code is fairly straightforward. One unusual feature of C is that we can generate pointers to elements within arrays and perform arithmetic with these pointers. These are translated into address computations in machine code.
+
+Optimizing compilers are particularly good at simplifying the address computations used by array indexing. This can make the correspondence between the C code and its translation into machine code somewhat difficult to decipher.
+
+####3.8.1 Basic Principles 
+For datatype T and integer constant N, consider a declaration of the form T a[n]
+Let us denote the starting location as xa. The declaration has two effects. First, it allocates a contiguous region of L * N bytes in memory where L is the size of data type T. second, it introduces an identifier A that can be used as a pointer to the beginning of the array. The value of this pointer will be xa. The array elements can be accessed using an integer index ranging between 0 and N-1.
+Array element i will be stored at address xa + L * i
+
+pointer has size of 8 bytes 
+
+The memory referencing instructions of x86-64 are designed to simplify array access. For example, suppose E is an array of values of type int and we wish to evaluate E[i], where the address of E is stored in register %rdx and i is stored in register %rcx. 
+Then ```movl (%rdx, %rcx, 4), %eax```
+will perform the address computation xe + 4i, read that memory location, and copy the result to register %eax. The allowed scaling factors of 1,2,4,and 8 cover the sizes of the common primitive data types. 
+#### 3.8.2 Pointer arithmetic 
+The unary operators '&' and '*' allow the generation and dereferencing of pointers. That is, for an expression Expr denoting some object, &Expr is a pointer giving the address of the object. FOr an expression AExpr denoting an address, *AExpr gives the value at that address. The expressions Expr and *&Expr are equivalent. The array subscripting operation can be applied to both arrays and pointers The array reference A[i] is identical to the expression *(A+i); It computes the address of the ith array element and then accesses this memory location. Expanding on our earlier example, suppose the starting address of integer array E and integer index i are stored in registers %rdx and %rcx, respectively. The following are some expressions involving E. We also show an assembly-code implementation of each expression, with the result being stored in either register %eax or register %rax
+
+![image.png](https://upload-images.jianshu.io/upload_images/6543506-4d410b33d79e22cf.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+In these examples, we see that operations that return array values have type int, and hence involve 4-byte operations and registers (e.g. %eax). Those that return pointers have type int *, and hence involve 8-byte operations and registers. The final example shows that one can compute the difference of two pointers within the same data structure, with the result being data having type long and value equal to the difference of the two addresses divided by the size of the data type
+
+##### 3.8.3 Nested Arrays
+The general principles of array allocation and referencing hold even when we create arrays of arrays. For example, the declaration
+```int A[5][3];```
+is equivalent to the declaration 
+```c
+typedef int row3_t [3];
+row3_t A[5];
+```
+data type row3_t is defined to be an array of three integers. Array A contains five such elements, each requiring 12 bytes to store the three integers. The total array size is then 4 * 5 * 3 = 60 bytes.
+
+The array elements are ordered in memory in row-major order, meaning all elements of row 0, which can be written A[0], followed by all elements of row 1 (A[1]), and. so on. This is illustrated in Figure 3.36.
+
+![figure 3.36](https://upload-images.jianshu.io/upload_images/6543506-7920158a8742fd25.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+This ordering is a consequence of our nested declaration. Viewing A as an array of five elements, each of which is an array of three int's, we first have A[0], followed by A[1], and so on.
+
+To access elements of multidimensional arrays, the compiler generates code to compute the offset of the desired element and then uses one of the MOV instructions with the start of the array as the base address 
+
+##### Fixed size arrays
+Figure 3.37b contains a number of clever optimizations. It removes the integer index j and converts all array references to pointer derederences. this involves 
+1. generating a pointer, which we have named Aptr, that points to successive elements in row i of A
+2. generating a pointer, which we have named Bptr, that points to successive elements in column k of B
+3. Generating a pointer, which we have named Bend, that equals the value Bptr will have when it is time to terminate the loop. The initial value for Aptr is the address of the first element of row i of A, given by the C expression &A[i][0]. The initial value for Bptr is the address of the first element of column k of B, given by the C expression &B[0][k]. The value for Bend is the index of what would be the (n+1)st element in column j of B, given by the C expression &B[N][k].
+![figure3.37](https://upload-images.jianshu.io/upload_images/6543506-9865d384fffbfb80.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+##### Variable-size arrays
+Historically, C only supported multidimensional arrays where the sizes (with the possible exception of the first dimension) could be determined at compile time. 
+Programmers requiring variable-size arrays had to allocate storage for these arrays using functions such as malloc or calloc, and they had to explicitly encode the mapping of multidimensional arrays into single-dimensino ones via row-major indexing, as expressed in Equation 3.1
+C99 introduced the capability of having array dimension expressions that are computed as the array is being allocated. 
+
+In the C version of variable-size arrays, we can declare an array int A[expr1][expr2]
+either as a local variable or as an argument to a function, and then the dimensions of the array are determined by evaluating the expressions expr1 and expr2 at the time the declaration is encountered. So, for example, we can write a function to access element i, j of an n x n array as follows:
+```c
+int var_ele(long n, int A[n][n], long i, long j) {
+  return A[i][j];
+}
+```
+The parameter n must precede the parameter A[n][n], so that the function can compute the array dimensions as the parameter is encountered.
+Gcc generates code for this referencing function as 
+```assembly
+var_ele:
+  imulq %rdx, %rdi
+  leaq   (%rsi, %rdi, 4), %rax
+  movl   (%rax, %rcx, 4), %eax
+  ret
+```
+As the annotations show, this code computes the address of element i, j as xa + 4(n*i) + 4j 
+
+When variable-size arrays are referenced within a loop, the compiler can often opimize the index computations by exploiting the regularity of the access patterns. For example, Figure 3.38(a) shows C code to compute element i, k of the product of two n x n arrays A and B. Gcc generates assembly code, which we have recast into C figure 3.38b. This code follows a different style from the optimized code for the fixed-size array, but that is more an artifact of the choices made by the compiler, rather than a fundamental requirement for the two different functions. The code of Figure 3.38 retains loop variable j, both to detect when the loop has terminated and to index into an array consisting of the elements of row i of A.
+The following is the assembly code for the loop of var_prod_ele:
+
+![figure3.38](https://upload-images.jianshu.io/upload_images/6543506-d07323ffa1c28c8b.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+### 3.9 Heterogeneous data structures
+struct aggregate multiple objects into a single unit; unions, declared using the keyword union, allow an object to be referenced using several different types.
+
+##### 3.9.1 Structures
+The C struct declaration creates a data type that groups objects of possibly different types into a single object. The different components of a structure are referenced by names. The implementation of structures is similar to that of arrays in that all of the components of a structure are stored in a contiguous region of memory and a pointer to a structure is the address of its first byte. The compiler maintains information about each structure type indicating the byte offset of each field. It generates references to structure elements using these offset of each field. It generates references to structure elements using these offsets as displacements in memory referencing instructions.
+
+##### 3.9.2 unions
+Unions provide a way to circumvent the type system of C, allowing a single object to be referenced according to multiple types. The syntax of a union declaration is identical to that for structures, but its semantics are very different. Rather than having the different fields reference different blocks of memory, they all reference the same block.
+
+Consider the following declarations:
+```c
+struct S3 {
+  char c;
+  int i[2];
+  double v;
+}
+union U3 {
+  char c;
+  int i[2];
+  double v;
+}
+```
+
+![image.png](https://upload-images.jianshu.io/upload_images/6543506-d02586a20015b2c6.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+##### Data alignment 
+Restrictions on data in order to have a good memory performance
+
+##### Buffer Overflow
+Most common security issue is from buffer overflow
+attacker can insert code they want to execute by buffer overflow
+
+![image.png](https://upload-images.jianshu.io/upload_images/6543506-7c745d8853087e89.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+Internet worm (1988) 
+IM war(1999)
+![image.png](https://upload-images.jianshu.io/upload_images/6543506-6454297440b1f51c.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![image.png](https://upload-images.jianshu.io/upload_images/6543506-5ae54c3c35e84ca9.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![image.png](https://upload-images.jianshu.io/upload_images/6543506-d6d2c0840a9b299c.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+Worm run on itself, propagate itself to other computers
+Virus add itself to other programs but does not run independently
+
+How to mitigate buffer overflow?
+1. Avoid overflow vulnerabilities in code (use fgets instead of gets)
+2. Randomized stack offsets (ASLR)
+3. Avoid file to be executable 
+4. Canaries (place special value on stack just beyond buffer
+
+### Summary
+We have get a view of machine-level programming. We gain insights into both the compiler and its optimization capabilities, along with the machine, its data types, and its instruction set.
+
+We also gotten mote complete picture of how the program stores data in different memory regions. 
+
+Machine level code is expressed as a sequence of instructions, each of which performs a single operation. Parts of the program state, such as registers and the run-time stack, are directly visible to the programmer. 
 
 ## Chapter 6
 
