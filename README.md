@@ -554,7 +554,8 @@ Arrays in C are one means of aggregating scalar data into larger data types. C u
 
 Optimizing compilers are particularly good at simplifying the address computations used by array indexing. This can make the correspondence between the C code and its translation into machine code somewhat difficult to decipher.
 
-####3.8.1 Basic Principles 
+##### 3.8.1 Basic Principles
+
 For datatype T and integer constant N, consider a declaration of the form T a[n]
 Let us denote the starting location as xa. The declaration has two effects. First, it allocates a contiguous region of L * N bytes in memory where L is the size of data type T. second, it introduces an identifier A that can be used as a pointer to the beginning of the array. The value of this pointer will be xa. The array elements can be accessed using an integer index ranging between 0 and N-1.
 Array element i will be stored at address xa + L * i
@@ -678,6 +679,116 @@ We have get a view of machine-level programming. We gain insights into both the 
 We also gotten mote complete picture of how the program stores data in different memory regions. 
 
 Machine level code is expressed as a sequence of instructions, each of which performs a single operation. Parts of the program state, such as registers and the run-time stack, are directly visible to the programmer. 
+
+## Chapter 5
+
+![image.png](https://upload-images.jianshu.io/upload_images/6543506-a67a295b40c2a9d0.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+#### 5.4 Eliminating loop inefficiencies
+Observe that procedure combine1, as shown in Figure 5.5, calls functino vec_length as the test condition of the for loop. Recall from our discussion of how to translate code containing loops into machine-level programs that the test condition must be evaluate on every iteration of the loop. On the other hand, the length of the vector does not change as the loop proceeds. We could therefore compute the vector length only once and use this value in our test condition.
+
+Figure 5.6 shows a modified version called combine2. It calls vec_length at the beginning and assigns the result to a local variable length. This transformation has noticeable effect on the overall performance for some data types and operations, and minimal or even none for others. In any case, this transformation is required to eliminate inefficiencies that would become bottlenecks as we attempt further optimizations. 
+
+##### Reduce procedure calls
+As we have seen, procedure calls can incur overhead and also block most forms of program optimization. We can see in the code for combine2 (figure 5.6) that get_vec_element is called on every loop iteration to retrieve the next vector element. This function checks the vector index i against the loop bounds with every vector reference, a clear source of inefficiency. Bounds checking might be a useful feature when dealing with arbitrary array accesses, but a simple analysis of the code for combine2 shows that all references will be valid.
+
+
+
+![figure 5.6](https://upload-images.jianshu.io/upload_images/6543506-ff18338c06c5fa1d.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+
+![figure 5.9](https://upload-images.jianshu.io/upload_images/6543506-21f7daa3b55547be.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+#### 5.6 Eliminating unneeded memory references
+The code for combine3 accumulates the value being computed by the combining operation at the location designated by the pointer dest. this attribute can be seen by examining the assembly code generated for the inner loop of the compiled code. We show here the x86-64 code generated for data type double and with multiplication as the combining operation:
+
+We see in this loop code that the address corresponding to pointer dest is held in register %rbx. It has also transformed the code to maintain a pointer to the ith data element in register %rdx, shown in the annotations as data+i. This pointer is incremented by 8 on every iteration. The loop termination is detected by comparing this pointer to one stored in register %rax. We can see that the accumulated value is read from and written to memory on each iteration. this reading and writing is wasteful, since the value read from dest at the begining of each iteration should simply be the value written at the end of the previous iteration.
+We can eliminate this needless reading and writing of memory by rewriting the code in the style of combine4 in figure5.10. We introduce a temporary variable acc that is used in the loop to accumulate the computed value. The result is stored at dest only after the loop has been completed. As the assembly code that follows shows, the compiler can now use register %xmm0 to hold the accumulated value. Compared to the loop in combine3, we have reduced the memory operations per iteration from two reads and one write to just a single read.
+
+
+> holding the accumulated value in local variable acc eliminated the need to retrieve it from memory and write back the updated value on every loop iteration
+> ![figure5.10](https://upload-images.jianshu.io/upload_images/6543506-adb1cb18ba83ef52.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+> We see a significant improvement in program performance, as shown in the following table 
+> ![image.png](https://upload-images.jianshu.io/upload_images/6543506-fbf4711140e1e3f5.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+> All of our times improve by factors ranging from 2.2 to 5.7, with the integer addition case fropping to just 1.27 clock cycles per element.
+> Again, one might think that a compiler should be able to automatically transform the combine3 code shown in figure 5.9 to accumulate the value in a register, as it does with the code for combine4 shown in figure 5.10. In fact, however, the two functions can have different behaviors due to memory aliasing. Consider, for example, the case of integer data with multiplication as the operation and 1 as the identity element. Let v = [2,3,5] be a vector of three elements and consider the following two function calls:
+
+combine3(v, get_vec_start(v) + 2);
+combine4(v, get_vec_start(v) + 2);
+![image.png](https://upload-images.jianshu.io/upload_images/6543506-40140619cf2ce715.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+#### 5.7 Understanding modern processors
+Up to this point, we have applied optimizations that did not rely on any features of the target machine. They simply reduced the overhead of procedure calls and eliminated some of the critical "optimization blockers" that cause difficulties for optimizing compilers. As we seek to push the performance further, we must consider optimizations that exploit the microarchitecture of the processor -- that is, the underlying system design by which a processor executes instructions. Getting every last bit of performance requires a detailed analysis of the program as well as code generation tuned for the target processor. Nonetheless, we can apply some basic optimizations that will yield an overall performance improvement on a large class of processors. the detailed performance results we report here may not hold for other machines, but the general principles of operation and optimization apply to a wide variety of machines. 
+
+To understand ways to improve performance, we require a basic understanding of the microarchitectures of modern processors. Due to the large number of transistors that can be integrated onto a single chip, modern microprocessors employ complex hardware that attempts to maximize program performance. one result is that their actual operation is far different from the view that is perceived by looking at machine-level programs. At the code level, it appears as if instructions are executed one at a time, where each instructino involves fetching values from registers or memory, performing an operation, and storing results back to a register or memory location. In the actual processor, a number of instructions are evaluated simultaneously, a phenomenon referred to as instruction-level parallelism. In some designs, there can be 100 or more instructions "in flight." Elaborate mechanisms are employed to make sure the behavior of this parallel execution exactly captures the sequential semantic model required by the machine-level program. this is one of the remarkable feats of modern microprocessors: they employ complex and exotic microarchitectures, in which multiple instructions can be executed in parallel, while presenting an operational view of simple sequential instruction execution.
+
+Although the detailed design of a modern microprocessor is well beyond the scope of this book, having a general idea of the principles by which they operate suffices to understand how they achieve instruction-level parallelism. We will find that two different lower bounds characterize the maximum performance of a program. The latency bound is encountered when a series of operations must be perfromed in strict sequence, because the result of on operation is required before the next one can begin. This bound can limit program performance when the data dependencies in the code limit the ability of the processor to exploit instruction-level parallelism. The throughput bound characterizes the raw computing capacity of the processor's functional units. This bound becomes the ultimate limit on program performance.
+
+##### 5.7.1 Overall operation 
+Figure 5.11 shows a very simplified view of a modern microprocessor. Our hypothetical processor design is based loosely on the structure of recent Intel processors. these processors are described in the industry as being superscalar, which means they can perform multiple operations on every clock cycle and out of order, meaning that the order in which instructions execute need not correspond to their ordering in the machine-level program. The overall design has two main parts: the *instruction control unit* (ICU), which is responsible for reading a sequence of instructions from memory and generating from these a set of primitive operations to perform on program data, and the execution unit (EU), which then executes these operations. out-of-order processors require far greater and more complex hardware, but they are better at achieving higher degrees of instruction-level parallelism.
+
+Branch (conditional jump) can be costly, modern processors employ a technique known as branch prediction, in which they guess whether or not a branch will be taken and also predict the target address for the branch. Using a technique known. as speculative execution, calculates the branch and determine wether if this branch will execute or not.
+
+The *instruction decoding logic takes the actual program instructions and converts them into a set of primitive operations (sometimes referred to as micro-operations) each of these operations performs some simple computational task such as adding two numbers, reading data from memory, or writing data to memory. For machines with complex instructions, such as x86 processors, an instruction can be decoded into multiple operations. The details of how instructions are decoded into sequences of operations varies between machines, and this information is considered highly proprietary. Fortunately, we can optimize our programs without knowing the low-level details of a particular machine implementation. In a typical x86 implementation, an instruction that only operates on registers. 
+
+![figure 5.11](https://upload-images.jianshu.io/upload_images/6543506-e8a530306695558f.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+The EU receives operations from the instruction fetch unit. Typically, it can receive a number of them on each clock cycle. These operations are dispatched to a set of functional units that perform address computations. Similarly, the store unit handles operations that write data from the processor to the memory. It also has an adder to perform address computations. As shown in the figure, the load and store units access memory via a data cache, a high-speed memory containing the most recently accessed data values.
+
+With speculative execution, the operations are evaluated, but the final results are not stored in the program registers or data memory until the processor can be certain that these instructions should actually have been executed. Branch operations are sent to the EU, not to determine where the branch should go, but rather to determine whether or not they were predicted correctly. If the prediction was incorrect, the EU will discard the results that have been computed beyond the branch point. it will also signal the branch unit that the prediction was incorrect fetching at the new location. 
+
+Figure 5.11 indicates that the different functional units are designed to perform different operations. those labeled as performing "arithmetic operations" are typically specialized to perform different combinations of integer and floating-point operations. As the number of transistors that can be integrated onto a single microprocessor chip has grown over time, successive models of microprocessors have increased the total number of functional units, the combinations of operations each unit can perform, and the performance of each of these units. The arithmetic units are intentionally designed to be able to perform a variety of different operations, since the required operations vary widely across different programs. For example, some programs might involve many integer operations, while others require many floating-point operations. If one functional unit were specialized to perform integer operations while another could only perform floating-point operations, then none of these programs would get the full benefit of having multiple functional units.
+
+in the above list, "integer arithmetic" refers to basic operations. A store operation requires two functional units -- one to compute the store address and one to actually store the data. 
+
+Within the ICU, the retirement unit keeps track of the ongoing processing and makes sure that it obeys the sequential semantics of the machine-level program. 
+
+First, once the operations for the instruction have completed and any branch points leading to this instruction are confirmed as having been correctly predicted, the instruction can be retired, with any updates to the program registers being made. If some branch point leading to this instruction was mispredicted, on the other hand, the instruction will be flushed, idscarding any results that may have been computed. by this means, mispredictions will not alter the program state. 
+
+The most common mechanism for controlling the communication of operands among the execution units is called register renaing. When an instruction that updates register r is decoded, a tag t is generated giving a unique identifier to the result of the operation. An entry (r, t) is added to a table maintaining the association between program register r and tag t. for an operation that will update this register. When a subsequent. instruction using register r as an operand is decoded, the operation sent to the execution unit will contain t as the source for the operand value. When some execution unit completes the first operation, it generates a result (v,t), indicating that the operation with tag t produced value v. Any operation waiting for t as a source will then use v as the source value, a form of data forwarding. By this mechanism, values can be forwarded directly from one operation to another, rather than being written to and read from the register file, enabling the second operation to begin as soon as the first has completed. The renaming table only contains entries for registers having pending write operations. When a decoded instruction requires a register r, and there is no tag associated with this register, the operand is retrieved directly from theregister file. With register renaing, an entire sequence of operations can be performed speculatively, even though the registers are updated only after the processor is certain of the branch outcomes.
+
+##### 5.7.2 Functional Unit Performance
+From figure 5.12 
+Each operation is characterized by its latency, meaning the total time required to perform the operation, the issue time, meaning the minimum num- ber of clock cycles between two independent operations of the same type, and the capacity, indicating the number of functional units capable of performing that operation.
+![figure5.12](https://upload-images.jianshu.io/upload_images/6543506-9a3597dc493213bc.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+concept of data flow (graphical representation of data flow) 有点像工厂的流程图，也有bottleneck
+combine4 can classify the register into four categories:
+* Read-only %rax in this case
+* write-only No such element in this function
+* Local %rax (compare)
+* Loop %rdx and %xmm0
+
+![image.png](https://upload-images.jianshu.io/upload_images/6543506-6252496261dc48eb.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+repeated over and over to generate graph for loop. The critical path is determined by the dependency on the path with highest latency. (In this case, the mul operation)
+就跟工厂生产一样，绝大部分瓶颈都在组装……
+![image.png](https://upload-images.jianshu.io/upload_images/6543506-2c8425f0a7d77226.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+### 5.8 Loop Unrolling
+Loop unrolling is a program transformation that reduces the number of iterations for a loop by increasing the number of elements computed on each iteration. 
+##### 2x1 loop unrolling
+The first loop steps through the array two elements at a time. That is, the loop index i is incremented by 2 on each iteration, and the combining operation is applied to array elements i and i + 1 in a single iteration.
+#### 5.9 Enhancing parallelism
+With multiple functional units, we could further optimize the performance of the loop unrolling.
+![figure5.21](https://upload-images.jianshu.io/upload_images/6543506-daea056a396394c1.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+with association (2x1a)
+![image.png](https://upload-images.jianshu.io/upload_images/6543506-f7e099b6fa0829fc.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+![image.png](https://upload-images.jianshu.io/upload_images/6543506-c9f764f46b3078c2.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+In Example A of Figure 5.33, argument src is a pointer to array element a[0], while dest is a pointer to array element a[1]. In this case, each load by the pointer reference *src will yield the value -10. Hence, after two iterations, the array elements will remain fixed at -10 and -9, respectively. the result of the read from src is not affected by the write to dest. Measuring this example over a larger number of iterations gives a CPE of 1.3.
+
+In Example B of figure 5.33, both arguments src and dest are pointers to array element a[0]. In this case, each load by the pointer reference *src will yield the value stored by the previous execution of the pointer reference *dest. 
+As a consequence, a series of ascending values will be stored in this location. In general, if function write_read is called with arguments src and dest pointing to the same memory location, and with argument cnt having some value n > 0, the net effect is to set the location to n-1. This example illustrates a phenomenon we will call a write/read dependency -- the outcome of a memory read depends on a recent memory write. The write/read dependency causes a slowdown in the processing of around 6 clock cycles.
+
+#### 5.13 Performance improvement techniques
+* Eliminate excessive function calls
+* Eliminate unnecessary memory references
+Low-level optimizations
+* Unroll loops to reduce overhead and to enable further optimizations.
+* Find ways to increase instruction-level parallelism by techniques such as multiple accumulators and reassociation
+* Rewrite conditional operations in a functional style to enable compilation via conditional data transfer.
 
 ## Chapter 6
 
