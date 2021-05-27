@@ -684,7 +684,12 @@ Machine level code is expressed as a sequence of instructions, each of which per
 
 ![image.png](https://upload-images.jianshu.io/upload_images/6543506-a67a295b40c2a9d0.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
+### 5.3
+
+
+
 #### 5.4 Eliminating loop inefficiencies
+
 Observe that procedure combine1, as shown in Figure 5.5, calls functino vec_length as the test condition of the for loop. Recall from our discussion of how to translate code containing loops into machine-level programs that the test condition must be evaluate on every iteration of the loop. On the other hand, the length of the vector does not change as the loop proceeds. We could therefore compute the vector length only once and use this value in our test condition.
 
 Figure 5.6 shows a modified version called combine2. It calls vec_length at the beginning and assigns the result to a local variable length. This transformation has noticeable effect on the overall performance for some data types and operations, and minimal or even none for others. In any case, this transformation is required to eliminate inefficiencies that would become bottlenecks as we attempt further optimizations. 
