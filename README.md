@@ -684,7 +684,7 @@ Machine level code is expressed as a sequence of instructions, each of which per
 
 ![image.png](https://upload-images.jianshu.io/upload_images/6543506-a67a295b40c2a9d0.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
-### 
+### #
 
 #### 5.4 Eliminating loop inefficiencies
 
