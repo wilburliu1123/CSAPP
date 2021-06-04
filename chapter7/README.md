@@ -1,4 +1,4 @@
-[200~## Linking
+## Linking
 Linking is the process of collecting and combining various pieces of code and data into a single file that can be loaded (copied) into memory and executed. Linking can be performed at compile time.
 On modern systems, linking is performed automatically by programs called linkers.
 
