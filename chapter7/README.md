@@ -87,3 +87,5 @@ Linux Linkers use 3 rules dealing with duplicate symbol names:
 2. Given strong and weak symbols with the same name, choose the strong symbol
 3. Given multiple weak symbols with the same name, choose any of the weak symbols.
 
+![image.png](https://upload-images.jianshu.io/upload_images/6543506-6f52a3a39fcb62c1.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
