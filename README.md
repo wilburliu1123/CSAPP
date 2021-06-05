@@ -682,9 +682,44 @@ Machine level code is expressed as a sequence of instructions, each of which per
 
 ## Chapter 5
 
-![image.png](https://upload-images.jianshu.io/upload_images/6543506-a67a295b40c2a9d0.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+When computational task is so demanding that it requires days or weeks to execute, then making it run just 20% faster can have significant impact. This chapter will explore program optimization
 
-### #
+1. Choose right algorithms and data structures 
+2. write source code that the compiler can effectively optimize to turn into executable code
+3. Divide a task into portions that can be computed in parallel, on some combination of multiple cores and multiple processors.
+
+In general, programmers must make a trade-off between how easy a program is to implement and maintain, and how fast it runs. 
+
+Program can be thwarted by optimization blockers -- aspect of the program's behavior that depend strongly on the execution environment. Programmers must assist the compiler by writing code that can be optimized readily.
+
+First step is to eliminating unnecessary function calls, conditional test, and memory references.
+Second step is instruction-level parallelism
+
+A good strategy is to start by looking carefully at the code for inner loops, identifying performance-recuding attributes such as excessive memory references and poor use of registers. 
+
+when two pointers may designate the same memory location is known as memory aliasing. Compiler must assume two pointer might point to the same address since it can effect the calculation result.
+so the twiddle2 won't be compiled as an optimized version of twiddle1
+![image.png](https://upload-images.jianshu.io/upload_images/6543506-e365c416a3c94a1b.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+so memory aliasing is our **first optimization blockers**
+
+the second optimization blockers is due to function calls. Since changing the function call may modify the result of the program. most compilers do not try to determine. whether a function is free of side effects so leaves the function calls intact.
+
+java has compiler optimization as well https://stackoverflow.com/questions/5981460/optimization-by-java-compiler
+
+![image.png](https://upload-images.jianshu.io/upload_images/6543506-83f0b7e7dddd00f8.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+
+![image.png](https://upload-images.jianshu.io/upload_images/6543506-a67a295b40c2a9d0.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+#### 5.2 Expressing program performance 
+*cycles per element* (abbreviated as CPE) was introduced because each processor has various speed and it is more instructive to express measurements in clock cycles rather than nanoseconds.
+
+#### 5.3 Program Example
+```c
+typedef struct {
+  long len;
+  data_t *data;
+} vec_rec, *vec_ptr;
+```
 
 #### 5.4 Eliminating loop inefficiencies
 
