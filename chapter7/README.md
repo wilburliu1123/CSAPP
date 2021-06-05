@@ -70,5 +70,20 @@ Each relocatable obj module, m, has a symbol table that contains information abo
 * Global symbols referenced by m but defined by some other module. Such symbols are called externals and correspond to nonstatic C functions and global variables that are defined in other modules.
 * Local symbols defined and referenced exclusively by m. static C functions and static global variables. These symbols are visible anywhere in m but cannot be referenced by other modules.
 
+### 7.6 Symbol Resolution
 
+Local variables have unique names in linker. Global symbols in current module will be assumed defined in some other module. So it generate a linker symbol table entry, and leaves it for the linker to handle. 
+![image.png](https://upload-images.jianshu.io/upload_images/6543506-8dd030af0d499530.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+![image.png](https://upload-images.jianshu.io/upload_images/6543506-67a174e7427f81b4.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+If multiple modules define global symbols with the same name. Linux compilation system will exports each global symbol to the assembler as either strong or weak
+
+Functions and initialized global variable get strong symbols. Uninitialized global variables get weak symbols.
+
+Linux Linkers use 3 rules dealing with duplicate symbol names:
+
+1. Multiple strong symbol with the same name are not allowed.
+2. Given strong and weak symbols with the same name, choose the strong symbol
+3. Given multiple weak symbols with the same name, choose any of the weak symbols.
 
